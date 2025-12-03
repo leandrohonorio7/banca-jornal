@@ -29,7 +29,7 @@ public partial class App : System.Windows.Application
     {
         // Configuração do DbContext com SQLite
         services.AddDbContext<BancaJornalDbContext>(options =>
-            options.UseSqlite("Data Source=bancajornal.db"));
+            options.UseSqlite("Data Source=/app/bancajornal.db"));
 
         // Registro de repositórios e Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();

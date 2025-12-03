@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  bancajornal:
+    image: bancajornal:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bancajornal_app
+    working_dir: /app
+    volumes:
+      - bancajornal_data:/app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    # WPF exige Windows Containers
+    isolation: process
+    # Se precisar expor porta para API, adicione abaixo
+    # ports:
+    #   - "5000:5000"
+volumes:
+  bancajornal_data:
+    driver: local

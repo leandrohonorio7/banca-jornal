@@ -61,6 +61,55 @@
                     └───────────────┘
 ```
 
+# Arquitetura do Sistema - Nova Versão
+
+## Diagrama de Camadas
+
+```
+BancaJornal.Web (Blazor WebAssembly SPA)
+      │
+      │ IndexedDB/LocalStorage (Cache Offline)
+      ▼
+BancaJornal.Application (Services + DTOs)
+      │
+      ▼
+BancaJornal.Repository (Interfaces + EF Core)
+      │
+      ▼
+BancaJornal.Model (Domínio)
+      │
+      ▼
+BancaJornal.Api (ASP.NET Core Web API)
+      │
+      ▼
+SQLite DB (bancajornal.db)
+```
+
+## Fluxo de Dados
+
+```
+Usuário → Blazor SPA (View/Razor) → ViewModel → Service (Application)
+→ [Cache Offline IndexedDB] → Repository → API → Banco SQLite
+
+* Operações CRUD funcionam offline via IndexedDB
+* Sincronização automática com backend quando disponível
+```
+
+## Padrões de Projeto Utilizados
+
+| Padrão              | Onde                 | Propósito                           |
+|---------------------|----------------------|-------------------------------------|
+| **MVVM**            | Web (SPA)            | Separar UI de lógica                |
+| **Repository**      | Repository           | Abstração de persistência           |
+| **Unit of Work**    | Repository           | Gerenciar transações                |
+| **Service Layer**   | Application          | Orquestrar casos de uso             |
+| **DTO**             | Application          | Transferir dados entre camadas      |
+| **Dependency Inj.** | Todo o sistema       | Desacoplamento e testabilidade      |
+| **Aggregate Root**  | Model (Venda)        | Garantir consistência transacional  |
+| **Value Object**    | Model (ItemVenda)    | Imutabilidade e ausência de ID      |
+
+## Princípios SOLID Mapeados
+
 ## Fluxo de uma Venda (Exemplo Completo)
 
 ```
@@ -141,7 +190,6 @@
 ✓ IUnitOfWork        → UnitOfWork (substituível)
 ```
 
-### Interface Segregation Principle (ISP)
 ```
 ✓ IProdutoRepository  → Métodos específicos de Produto
 ✓ IVendaRepository    → Métodos específicos de Venda

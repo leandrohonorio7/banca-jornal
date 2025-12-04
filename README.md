@@ -1,10 +1,10 @@
 # Sistema de Gerenciamento de Banca de Jornal
 
-Sistema desktop completo para gerenciamento de banca de jornal, desenvolvido em C# com WPF, seguindo arquitetura em camadas e princípios SOLID.
+Sistema multiplataforma para gerenciamento de banca de jornal, desenvolvido em C# com Blazor WebAssembly (SPA), ASP.NET Core Web API, cache offline (IndexedDB) e arquitetura em camadas seguindo princípios SOLID.
 
 ## 🏗️ Arquitetura
 
-O sistema foi desenvolvido seguindo uma arquitetura em camadas bem definida:
+O sistema segue uma arquitetura em camadas moderna:
 
 ### Camadas
 
@@ -13,7 +13,8 @@ BancaJornal/
 ├── BancaJornal.Model/          # Camada de Domínio
 ├── BancaJornal.Repository/     # Camada de Persistência
 ├── BancaJornal.Application/    # Camada de Aplicação
-└── BancaJornal.Desktop/        # Camada de Apresentação
+├── BancaJornal.Api/            # Backend REST (ASP.NET Core)
+└── BancaJornal.Web/            # Frontend SPA (Blazor WebAssembly)
 ```
 
 #### 1. **MODEL** (Domínio)
@@ -44,14 +45,20 @@ BancaJornal/
   - `VendaService`: Processamento de vendas
   - `DashboardService`: Agregação de dados para dashboard
 
-#### 4. **DESKTOP** (Apresentação)
-- **Responsabilidade**: Interface com usuário
+
+#### 4. **WEB** (Apresentação SPA)
+- **Responsabilidade**: Interface com usuário (SPA)
 - **Padrões**: MVVM (Model-View-ViewModel)
-- **Tecnologia**: WPF (Windows Presentation Foundation)
+- **Tecnologia**: Blazor WebAssembly
 - **Componentes**:
-  - Views (XAML): Interface visual
+  - Views (Razor): Interface visual
   - ViewModels: Lógica de apresentação
+  - IndexedDB/LocalStorage: Cache offline
   - Injeção de Dependências via Microsoft.Extensions.DependencyInjection
+
+#### 5. **API** (Backend REST)
+- **Responsabilidade**: Expor endpoints REST para sincronização e persistência
+- **Tecnologia**: ASP.NET Core Web API
 
 ## ✨ Funcionalidades
 
@@ -79,13 +86,21 @@ BancaJornal/
 - Campo de observações
 - Transações atômicas (rollback em caso de erro)
 
+### 4. Suporte Offline e Sincronização
+- Utilização do IndexedDB para cache local dos dados
+- Operações CRUD funcionam offline
+- Sincronização automática com backend quando disponível
+
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **.NET 8.0**: Framework principal
-- **WPF**: Interface desktop
+- **Blazor WebAssembly**: Interface SPA
+- **ASP.NET Core Web API**: Backend REST
 - **Entity Framework Core 8.0**: ORM
 - **SQLite**: Banco de dados
 - **CommunityToolkit.Mvvm**: Implementação MVVM
+- **Blazor.IndexedDB.Framework**: Cache offline
 - **Microsoft.Extensions.DependencyInjection**: Injeção de dependências
 
 ## 🚀 Como Executar
@@ -94,29 +109,41 @@ BancaJornal/
 
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Visual Studio 2022 ou superior (recomendado)
-- Windows 10 ou superior
+- Windows, Linux ou Mac (SPA e API)
 
 ### Passos
 
 1. **Clone ou navegue até o repositório**
-   ```bash
-   cd c:\Users\leandro.honorio.lima\source\repo-ia
-   ```
+  ```bash
+  cd c:\Users\leandro.honorio.lima\source\repo-ia
+  ```
 
 2. **Restaurar dependências**
-   ```bash
-   dotnet restore BancaJornal.sln
-   ```
+  ```bash
+  dotnet restore BancaJornal.sln
+  ```
 
 3. **Compilar o projeto**
-   ```bash
-   dotnet build BancaJornal.sln
-   ```
+  ```bash
+  dotnet build BancaJornal.sln
+  ```
 
-4. **Executar a aplicação**
-   ```bash
-   dotnet run --project BancaJornal.Desktop
-   ```
+4. **Executar o backend (API)**
+  ```bash
+  dotnet run --project BancaJornal.Api
+  ```
+
+5. **Executar o frontend (SPA)**
+  ```bash
+  dotnet run --project BancaJornal.Web
+  ```
+
+6. **Acessar a aplicação**
+  Abra o navegador em `http://localhost:5000` (ou porta configurada)
+
+### Suporte Offline
+- O frontend Blazor WebAssembly funciona offline, utilizando IndexedDB para cache local.
+- Sincronização automática com backend quando disponível.
 
    Ou abra `BancaJornal.sln` no Visual Studio e pressione F5.
 

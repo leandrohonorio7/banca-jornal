@@ -66,9 +66,6 @@ namespace BancaJornal.Model.Entities;
 public class MinhaEntidade
 {
     public int Id { get; private set; }
-    public string Nome { get; private set; }
-    
-    protected MinhaEntidade() { } // EF Core
     
     public MinhaEntidade(string nome)
     {

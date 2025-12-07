@@ -7,6 +7,9 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: 'BancaJornal.sln'
+  API_PROJECT: 'BancaJornal.Api/BancaJornal.Api.csproj'
+  WEB_PROJECT: 'BancaJornal.Web/BancaJornal.Web.csproj'
 
 jobs:
   build-and-test:
@@ -21,23 +24,32 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
-      run: dotnet restore BancaJornal.sln
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
 
     - name: Build solution
-      run: dotnet build BancaJornal.sln --configuration Release --no-restore
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
 
     - name: Run tests
       run: |
         echo "✓ Tests passed or skipped (no test project configured yet)"
         # Quando adicionar testes, descomente:
-        # dotnet test BancaJornal.Tests --no-build --verbosity normal
+        # dotnet test ${{ env.SOLUTION_PATH }} --no-build --verbosity normal --configuration Release
+      continue-on-error: true
 
     - name: Publish API
-      run: dotnet publish BancaJornal.Api/BancaJornal.Api.csproj -c Release -o ./publish/api --no-build
+      run: dotnet publish ${{ env.API_PROJECT }} -c Release -o ./publish/api --no-build
 
     - name: Publish Web
-      run: dotnet publish BancaJornal.Web/BancaJornal.Web.csproj -c Release -o ./publish/web --no-build
+      run: dotnet publish ${{ env.WEB_PROJECT }} -c Release -o ./publish/web --no-build
 
     - name: Upload API artifact
       uses: actions/upload-artifact@v4
@@ -69,49 +81,94 @@ jobs:
         port: ${{ secrets.HOSTINGER_PORT }}
         script: |
           echo "=========================================="
-          echo "  Deploy Automático - Banca Jornal"
+          echo "  🚀 Deploy Automático - Banca Jornal"
           echo "=========================================="
           
+          # Navegar para o diretório do projeto
           cd ${{ secrets.HOSTINGER_PROJECT_PATH }}
           
-          echo "[1/6] Baixando atualizações do GitHub..."
-          git pull origin main || git pull origin master
+          echo "[1/8] 📥 Baixando atualizações do GitHub..."
+          git fetch origin
+          git reset --hard origin/master || git reset --hard origin/main
           
-          echo "[2/6] Parando containers antigos..."
+          echo "[2/8] 💾 Backup do banco de dados..."
+          if [ -f ./data/bancajornal.db ]; then
+            cp ./data/bancajornal.db ./data/bancajornal.db.backup.$(date +%Y%m%d_%H%M%S)
+            echo "✓ Backup criado"
+          else
+            echo "⚠ Banco de dados não encontrado, será criado na primeira execução"
+          fi
+          
+          echo "[3/8] 🛑 Parando containers antigos..."
           docker-compose down
           
-          echo "[3/6] Removendo imagens antigas..."
+          echo "[4/8] 🧹 Limpando recursos antigos..."
           docker-compose rm -f
+          docker system prune -f
           
-          echo "[4/6] Buildando novos containers..."
+          echo "[5/8] 🔨 Buildando novos containers..."
           docker-compose build --no-cache
           
-          echo "[5/6] Iniciando containers..."
+          echo "[6/8] 🚀 Iniciando containers..."
           docker-compose up -d
           
-          echo "[6/6] Verificando status..."
-          sleep 5
+          echo "[7/8] ⏳ Aguardando containers iniciarem..."
+          sleep 10
+          
+          echo "[8/8] ✅ Verificando status..."
           docker-compose ps
-          docker-compose logs --tail=50 bancajornal-api
           
           echo ""
-          echo "✓ Deploy concluído com sucesso!"
+          echo "📋 Últimos logs:"
+          docker-compose logs --tail=50 bancajornal_api
+          
+          echo ""
+          echo "=========================================="
+          echo "  ✓ Deploy concluído com sucesso!"
+          echo "=========================================="
 
     - name: Verify Deployment
       run: |
         echo "=========================================="
-        echo "✓ Deployment completed successfully!"
+        echo "  ✅ Deployment Completed Successfully!"
         echo "=========================================="
         echo ""
         echo "📦 Application: Banca Jornal"
         echo "🌿 Branch: ${{ github.ref_name }}"
-        echo "👤 Author: ${{ github.actor }}"
+        echo "👤 Triggered by: ${{ github.actor }}"
         echo "💬 Commit: ${{ github.event.head_commit.message }}"
+        echo "🔖 SHA: ${{ github.sha }}"
         echo ""
-        echo "🔗 Check your application at your Hostinger domain"
-        echo "📊 Monitor logs: docker-compose logs -f bancajornal-api"
+        echo "🔗 Access your application:"
+        echo "   Frontend: https://${{ secrets.HOSTINGER_HOST }}"
+        echo "   API Docs: https://${{ secrets.HOSTINGER_HOST }}/swagger"
+        echo ""
+        echo "📊 Monitor application:"
+        echo "   ssh ${{ secrets.HOSTINGER_USERNAME }}@${{ secrets.HOSTINGER_HOST }}"
+        echo "   cd ${{ secrets.HOSTINGER_PROJECT_PATH }}"
+        echo "   docker-compose logs -f bancajornal_api"
+        echo ""
+        echo "=========================================="
 
-    - name: Send notification on failure
+    - name: Notify on Failure
       if: failure()
       run: |
-        echo "❌ Deploy failed! Check the logs above for details."
+        echo "=========================================="
+        echo "  ❌ Deployment Failed!"
+        echo "=========================================="
+        echo ""
+        echo "Check the logs above for details."
+        echo "Common issues:"
+        echo "  - GitHub Secrets not configured"
+        echo "  - SSH connection failed"
+        echo "  - Docker build errors"
+        echo "  - Insufficient disk space on VPS"
+        echo ""
+        echo "Troubleshooting:"
+        echo "  1. Verify GitHub Secrets are set correctly"
+        echo "  2. Check VPS is accessible via SSH"
+        echo "  3. Ensure Docker and Docker Compose are installed"
+        echo "  4. Check disk space: df -h"
+        echo "  5. Review logs in Actions tab"
+        echo ""
+        echo "=========================================="

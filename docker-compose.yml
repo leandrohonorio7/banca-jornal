@@ -1,13 +1,13 @@
 services:
+  # Aplicação Blazor WebAssembly + ASP.NET Core API
   bancajornal-api:
     image: bancajornal-api:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bancajornal_api
-    ports:
-      - "80:80"           # Porta HTTP pública
-      - "443:443"         # Porta HTTPS pública
+    container_name: bancajornal-api
+    expose:
+      - "80"  # Porta interna, não exposta publicamente
     volumes:
       - ./data:/app/data  # Persistência do banco SQLite
       - ./logs:/app/logs  # Logs da aplicação
@@ -15,9 +15,40 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/bancajornal.db
+      - PathBase=/bancajornal  # Base path para reverse proxy
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     restart: unless-stopped
     networks:
       - banca-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: bancajornal-nginx
+    ports:
+      - "8090:8090"   # Porta HTTP customizada (ao invés de 80)
+      - "8443:8443"   # Porta HTTPS customizada (ao invés de 443)
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro  # Para certificados SSL futuros
+      - ./nginx/logs:/var/log/nginx    # Logs do Nginx
+    depends_on:
+      bancajornal-api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - banca-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   banca-network:

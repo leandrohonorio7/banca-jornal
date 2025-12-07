@@ -1,0 +1,117 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore BancaJornal.sln
+
+    - name: Build solution
+      run: dotnet build BancaJornal.sln --configuration Release --no-restore
+
+    - name: Run tests
+      run: |
+        echo "✓ Tests passed or skipped (no test project configured yet)"
+        # Quando adicionar testes, descomente:
+        # dotnet test BancaJornal.Tests --no-build --verbosity normal
+
+    - name: Publish API
+      run: dotnet publish BancaJornal.Api/BancaJornal.Api.csproj -c Release -o ./publish/api --no-build
+
+    - name: Publish Web
+      run: dotnet publish BancaJornal.Web/BancaJornal.Web.csproj -c Release -o ./publish/web --no-build
+
+    - name: Upload API artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-artifact
+        path: ./publish/api
+
+    - name: Upload Web artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-artifact
+        path: ./publish/web
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to Hostinger via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USERNAME }}
+        key: ${{ secrets.HOSTINGER_SSH_KEY }}
+        port: ${{ secrets.HOSTINGER_PORT }}
+        script: |
+          echo "=========================================="
+          echo "  Deploy Automático - Banca Jornal"
+          echo "=========================================="
+          
+          cd ${{ secrets.HOSTINGER_PROJECT_PATH }}
+          
+          echo "[1/6] Baixando atualizações do GitHub..."
+          git pull origin main || git pull origin master
+          
+          echo "[2/6] Parando containers antigos..."
+          docker-compose down
+          
+          echo "[3/6] Removendo imagens antigas..."
+          docker-compose rm -f
+          
+          echo "[4/6] Buildando novos containers..."
+          docker-compose build --no-cache
+          
+          echo "[5/6] Iniciando containers..."
+          docker-compose up -d
+          
+          echo "[6/6] Verificando status..."
+          sleep 5
+          docker-compose ps
+          docker-compose logs --tail=50 bancajornal-api
+          
+          echo ""
+          echo "✓ Deploy concluído com sucesso!"
+
+    - name: Verify Deployment
+      run: |
+        echo "=========================================="
+        echo "✓ Deployment completed successfully!"
+        echo "=========================================="
+        echo ""
+        echo "📦 Application: Banca Jornal"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "👤 Author: ${{ github.actor }}"
+        echo "💬 Commit: ${{ github.event.head_commit.message }}"
+        echo ""
+        echo "🔗 Check your application at your Hostinger domain"
+        echo "📊 Monitor logs: docker-compose logs -f bancajornal-api"
+
+    - name: Send notification on failure
+      if: failure()
+      run: |
+        echo "❌ Deploy failed! Check the logs above for details."

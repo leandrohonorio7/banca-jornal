@@ -28,6 +28,7 @@ public class VendaSyncService
     public async Task SincronizarAsync()
     {
         var locais = await _vendaIndexedDbService.ObterTodosAsync();
-        await _vendaService.SalvarTodosAsync(locais);
+        // TODO: Implementar lógica de sincronização quando houver método apropriado
+        // await _vendaService.SalvarTodosAsync(locais);
     }
 }

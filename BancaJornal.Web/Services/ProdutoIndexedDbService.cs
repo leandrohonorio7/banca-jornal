@@ -1,22 +1,20 @@
-using Blazor.IndexedDB.Framework;
+using Blazored.LocalStorage;
 using BancaJornal.Application.DTOs;
 
 public class ProdutoIndexedDbService
 {
-    private readonly IndexedDBManager _dbManager;
-    public ProdutoIndexedDbService(IndexedDBManager dbManager)
+    private readonly ILocalStorageService _localStorage;
+    public ProdutoIndexedDbService(ILocalStorageService localStorage)
     {
-        _dbManager = dbManager;
+        _localStorage = localStorage;
     }
     public async Task<List<ProdutoDto>> ObterTodosAsync()
     {
-        var result = await _dbManager.GetRecords<ProdutoDto>("produtos");
-        return result.ToList();
+        var result = await _localStorage.GetItemAsync<List<ProdutoDto>>("produtos");
+        return result ?? new List<ProdutoDto>();
     }
     public async Task SalvarTodosAsync(List<ProdutoDto> produtos)
     {
-        await _dbManager.ClearStore("produtos");
-        foreach (var p in produtos)
-            await _dbManager.AddRecord(new StoreRecord<ProdutoDto> { Storename = "produtos", Data = p });
+        await _localStorage.SetItemAsync("produtos", produtos);
     }
 }

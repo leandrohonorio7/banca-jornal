@@ -1,21 +1,28 @@
-version: '3.8'
 services:
-  bancajornal:
-    image: bancajornal:latest
+  bancajornal-api:
+    image: bancajornal-api:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bancajornal_app
-    working_dir: /app
+    container_name: bancajornal_api
+    ports:
+      - "80:80"           # Porta HTTP pública
+      - "443:443"         # Porta HTTPS pública
     volumes:
-      - bancajornal_data:/app
+      - ./data:/app/data  # Persistência do banco SQLite
+      - ./logs:/app/logs  # Logs da aplicação
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-    # WPF exige Windows Containers
-    isolation: process
-    # Se precisar expor porta para API, adicione abaixo
-    # ports:
-    #   - "5000:5000"
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/bancajornal.db
+    restart: unless-stopped
+    networks:
+      - banca-network
+
+networks:
+  banca-network:
+    driver: bridge
+
 volumes:
-  bancajornal_data:
-    driver: local
+  data:
+  logs:

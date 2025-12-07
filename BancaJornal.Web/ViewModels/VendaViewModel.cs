@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Blazored.LocalStorage;
-using Blazor.IndexedDB.Framework;
 using BancaJornal.Application.DTOs;
 using BancaJornal.Application.Services;
 
@@ -25,7 +24,7 @@ public partial class VendaViewModel : ObservableObject
     [RelayCommand]
     public async Task CarregarVendasAsync()
     {
-        // Tenta carregar do IndexedDB
+        // Tenta carregar do LocalStorage
         var cache = await _vendaIndexedDbService.ObterTodosAsync();
         if (cache != null && cache.Count > 0)
         {

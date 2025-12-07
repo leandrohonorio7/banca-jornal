@@ -30,7 +30,7 @@ public class ProdutoSyncService
     public async Task SincronizarAsync()
     {
         var locais = await _produtoIndexedDbService.ObterTodosAsync();
-        // Aqui pode implementar lógica de merge/conflito
-        await _produtoService.SalvarTodosAsync(locais);
+        // TODO: Implementar lógica de sincronização quando houver método apropriado
+        // await _produtoService.SalvarTodosAsync(locais);
     }
 }

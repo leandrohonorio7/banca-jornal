@@ -24,6 +24,12 @@ public class VendaService
         return venda != null ? VendaDto.FromEntity(venda) : null;
     }
 
+    public async Task<IEnumerable<VendaDto>> ObterTodosAsync()
+    {
+        var vendas = await _unitOfWork.Vendas.ObterTodosAsync();
+        return vendas.Select(VendaDto.FromEntity);
+    }
+
     public async Task<IEnumerable<VendaDto>> ObterVendasDoMesAsync(int mes, int ano)
     {
         var vendas = await _unitOfWork.Vendas.ObterVendasDoMesAsync(mes, ano);

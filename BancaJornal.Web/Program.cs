@@ -1,40 +1,27 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using BancaJornal.Web;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using Blazored.LocalStorage;
-using Blazor.IndexedDB.Framework;
+using BancaJornal.Web;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<BancaJornal.Web.App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
+
+// Configurar HttpClient com a URL base da API
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? builder.HostEnvironment.BaseAddress;
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddIndexedDB(options =>
-{
-    options.DbName = "BancaJornalCache";
-    options.Version = 1;
-    options.Stores.Add(new StoreSchema
-    {
-        Name = "produtos",
-        PrimaryKey = new IndexSpec { Name = "id", KeyPath = "id", Auto = false },
-        Indexes = new List<IndexSpec> {
-            new IndexSpec { Name = "nome", KeyPath = "nome", Auto = false }
-        }
-    });
-    options.Stores.Add(new StoreSchema
-    {
-        Name = "vendas",
-        PrimaryKey = new IndexSpec { Name = "id", KeyPath = "id", Auto = false },
-        Indexes = new List<IndexSpec> {
-            new IndexSpec { Name = "data", KeyPath = "data", Auto = false }
-        }
-    });
-});
-// DI para ViewModels e Services
+
+// Registrar ViewModels
 builder.Services.AddTransient<ProdutoViewModel>();
 builder.Services.AddTransient<VendaViewModel>();
+
+// Registrar Services
+builder.Services.AddScoped<ProdutoService>();
+builder.Services.AddScoped<VendaService>();
 builder.Services.AddScoped<ProdutoIndexedDbService>();
 builder.Services.AddScoped<VendaIndexedDbService>();
 builder.Services.AddScoped<ProdutoSyncService>();
 builder.Services.AddScoped<VendaSyncService>();
-// ... outros serviços
+
 await builder.Build().RunAsync();

@@ -6,7 +6,22 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BancaJornal.Application\BancaJornal.Application.csproj" />
+    <ProjectReference Include="..\BancaJornal.Repository\BancaJornal.Repository.csproj" />
+    <ProjectReference Include="..\BancaJornal.Model\BancaJornal.Model.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BancaJornal.Application\BancaJornal.Application.csproj" />
+    <ProjectReference Include="..\BancaJornal.Repository\BancaJornal.Repository.csproj" />
+    <ProjectReference Include="..\BancaJornal.Model\BancaJornal.Model.csproj" />
   </ItemGroup>
 </Project>

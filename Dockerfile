@@ -19,5 +19,15 @@ RUN dotnet publish "BancaJornal.Web/BancaJornal.Web.csproj" -c Release -o /app/p
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=publish /app/publish/web ./web
+
+# Copiar frontend Blazor WASM para wwwroot da API
+COPY --from=publish /app/publish/web/wwwroot ./wwwroot
+
+# Criar diretórios para dados e logs com permissões adequadas
+RUN mkdir -p /app/data /app/logs && \
+    chmod -R 777 /app/data /app/logs
+
+EXPOSE 80
+EXPOSE 443
+
 ENTRYPOINT ["dotnet", "BancaJornal.Api.dll"]
